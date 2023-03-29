@@ -2,11 +2,16 @@ import dotenv from 'dotenv'
 import express, { Express, Request, Response } from 'express'
 import helmet from './helmet-config'
 import httpStatusCodes from './src/httpStatusCodes'
-import { authMiddleware, requestLoggerMiddleware } from './src/middleware'
+import {
+  authMiddleware,
+  requestLoggerMiddleware,
+  validateRequestMiddleware,
+} from './src/middleware'
 import {
   listUsersHandler,
   registerUserHandler,
 } from './src/modules/users/user-handler'
+import { RegisterUserSchema } from './src/modules/users/user-validation-schema'
 
 dotenv.config()
 
@@ -44,7 +49,10 @@ userv1Routes.route('/').all((req: Request, res: Response) => {
   res.status(httpStatusCodes.METHOD_NOT_ALLOWED).send()
 })
 
-userv1Routes.route('/users').get(listUsersHandler).post(registerUserHandler)
+userv1Routes
+  .route('/users')
+  .get(listUsersHandler)
+  .post(validateRequestMiddleware(RegisterUserSchema), registerUserHandler)
 
 app.use('/api/v1', userv1Routes)
 

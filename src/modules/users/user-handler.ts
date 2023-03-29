@@ -1,30 +1,19 @@
 import { Request, Response } from 'express'
-import { z } from 'zod'
 import { logger } from '../../../server'
 import httpStatusCodes from '../../httpStatusCodes'
 import { userService } from './user-service'
-
-const RegisterUserSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-})
-
-/**
- * Handler functions handle validating the request object
- *
- *
- */
+import { RegisterUserSchema } from './user-validation-schema'
 
 export async function registerUserHandler(req: Request, res: Response) {
-  const result = RegisterUserSchema.safeParse(req.body)
+  // const result = RegisterUserSchema.safeParse(req.body)
 
-  if (!result.success) {
-    logger.error(result.error.issues)
-    return res.status(httpStatusCodes.BAD_REQUEST).send()
-  }
+  // if (!result.success) {
+  //   logger.error(result.error.issues)
+  //   return res.status(httpStatusCodes.UNPROCESSABLE_ENTITY).send()
+  // }
 
   try {
-    const { name, email } = result.data
+    const { name, email } = req.body
     const user = await userService.register(name, email)
     return (
       res
