@@ -1,17 +1,18 @@
 import dotenv from 'dotenv'
 import express, { Express, Request, Response } from 'express'
 import helmet from './helmet-config'
-import httpStatusCodes from './src/httpStatusCodes'
+import { HttpStatusCodes } from './httpStatusCodes'
 import {
   authMiddleware,
+  hasAdminRoleMiddleware,
   requestLoggerMiddleware,
   validateRequestMiddleware,
-} from './src/middleware'
+} from './middleware'
 import {
   listUsersHandler,
   registerUserHandler,
-} from './src/modules/users/user-handler'
-import { RegisterUserSchema } from './src/modules/users/user-validation-schema'
+} from './modules/users/user-handler'
+import { RegisterUserSchema } from './modules/users/user-validation-schema'
 
 dotenv.config()
 
@@ -37,22 +38,29 @@ app.use(requestLoggerMiddleware)
 app.use(appendMissingSlashMiddleware)
 
 // == BODY PARSER ==
-
 // Apparently since 4.X something these arent bundled
 app.use(express.json()) // Handling body as JSON
-app.use(express.urlencoded()) // Handling form data i think
+app.use(express.urlencoded({ extended: true })) // Handling form data i think
 
 const port = process.env.PORT
 const userv1Routes = express.Router()
+const apiRoutes = express.Router()
+const v1Routes = express.Router()
+
+apiRoutes
 
 userv1Routes.route('/').all((req: Request, res: Response) => {
-  res.status(httpStatusCodes.METHOD_NOT_ALLOWED).send()
+  res.status(HttpStatusCodes.METHOD_NOT_ALLOWED).send()
 })
 
 userv1Routes
   .route('/users')
   .get(listUsersHandler)
-  .post(validateRequestMiddleware(RegisterUserSchema), registerUserHandler)
+  .post(
+    hasAdminRoleMiddleware,
+    validateRequestMiddleware(RegisterUserSchema),
+    registerUserHandler
+  )
 
 app.use('/api/v1', userv1Routes)
 

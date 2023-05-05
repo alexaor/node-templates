@@ -1,12 +1,34 @@
+import { HttpStatusCodes } from '../httpStatusCodes'
+import { userRepository } from '../modules/users/user-repository'
+import { userService } from '../modules/users/user-service'
+import { logger } from '../server'
 import { Request, Response } from 'express'
 import { ZodSchema } from 'zod'
-import { logger } from '../../server'
-import httpStatusCodes from '../httpStatusCodes'
 
-export function authMiddleware(req: Request, res: Response, next: any) {
+type AuthenticatedNext = (err?: any) => void
+
+type AuthenticatedRequest = Request & { user: any }
+
+export async function authMiddleware(
+  req: Request,
+  res: Response,
+  next: AuthenticatedNext
+) {
   if (!req.headers.authorization) return res.status(401).send('Unauthorized')
   const token = req.headers.authorization.split(' ')[1]
 
+  // locals attr are usually used to store temporary data for the duration of the request
+  // not really sure of the difference between using req.locals and res.locals
+  const user = await userRepository.getUser('1')
+
+
+
+  logger.info(user)
+
+  req.locals = {
+    user: user,
+  }
+  req.tenant = "X-tenant"
   next()
 }
 
@@ -37,8 +59,8 @@ export function validateRequestMiddleware(schema: ZodSchema) {
     if (!result.success) {
       logger.error(result.error.issues)
       return res
-        .status(httpStatusCodes.UNPROCESSABLE_ENTITY.code)
-        .send(httpStatusCodes.UNPROCESSABLE_ENTITY.message)
+        .status(HttpStatusCodes.UNPROCESSABLE_ENTITY.code)
+        .send(HttpStatusCodes.UNPROCESSABLE_ENTITY.message)
     }
 
     // Not really sure what is happening here.
@@ -49,4 +71,20 @@ export function validateRequestMiddleware(schema: ZodSchema) {
     // Whats the difference between calling next and returning it?
     return next()
   }
+}
+
+export function hasAdminRoleMiddleware(req: Request, res: Response, next: any) {
+  console.info(JSON.stringify(res.locals))
+  console.info(req.tenant)
+  //@ts-ignore
+  console.info(JSON.stringify(req.locals))
+  if (!userService.hasPermission(res.locals.user, 'admin')) {
+    return res
+      .status(HttpStatusCodes.FORBIDDEN.code)
+      .send(HttpStatusCodes.FORBIDDEN.message)
+  }
+
+  logger.info(res.locals.user)
+
+  return next()
 }

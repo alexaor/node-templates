@@ -1,10 +1,13 @@
-export default {
+export const HttpStatusCodes = {
   OK: 200,
   CREATED: 201,
   NO_CONTENT: 204,
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
+  FORBIDDEN: {
+    code: 403,
+    message: 'Forbidden',
+  },
   METHOD_NOT_ALLOWED: 405,
   NOT_FOUND: 404,
   CONFLICT: 409,

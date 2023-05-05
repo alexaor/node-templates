@@ -1,3 +1,7 @@
+import crypto from 'crypto'
+import { userDb } from '../../db'
+import { userRepository } from './user-repository'
+
 /**
  * Services manage business and data access.
  */
@@ -16,6 +20,17 @@ const users = [
   {
     name: 'John',
     email: 'john@hello.com',
+    password: crypto.pbkdf2(
+      'password',
+      'salt',
+      100000,
+      64,
+      'sha512',
+      (err, derivedKey) => {
+        if (err) throw err
+        return derivedKey.toString('hex')
+      }
+    ),
   },
   {
     name: 'Jane',
@@ -49,7 +64,10 @@ async function registerUser(
   return user
 }
 
+// just export the functions
 export const userService = {
   register: registerUser,
+  getUser: async (userId: string) => await userRepository.getUser(userId),
   list: () => users,
+  hasPermission: (userId: number | string, permissionString: string) => true,
 }

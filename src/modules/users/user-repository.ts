@@ -1,9 +1,7 @@
+import { userService } from './user-service'
+
 function mapToUserEntity(user: any) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  }
+  return user
 }
 
 export const userRepository = {
@@ -19,13 +17,9 @@ export const userRepository = {
 
   async getUser(id: string) {
     const userFromDb = await new Promise(resolve =>
-      setTimeout(resolve, 3000)
+      setTimeout(resolve, 200)
     ).then(() => {
-      return {
-        id,
-        name: 'John',
-        email: 'john@hello.com',
-      }
+      userService.getUser(id)
     })
 
     // Overlkill if db data design is very close to business data design
